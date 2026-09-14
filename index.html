@@ -30,7 +30,6 @@
     body{padding:20px 16px}
     .movil{height:min(860px,calc(100vh - 40px));border-radius:14px}
   }
-  /* cabecera */
   .cab{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--verde);color:#fff;min-height:60px;flex:0 0 auto}
   .cab .atras{width:32px;height:32px;display:grid;place-items:center;font-size:22px;opacity:.95}
   .avatar{width:40px;height:40px;border-radius:50%;background:#dfe5e7;flex:0 0 auto;overflow:hidden;display:grid;place-items:center;color:#54656f;font-weight:600}
@@ -40,7 +39,6 @@
   .cab .estado{font-size:12.5px;opacity:.9}
   .cab button{background:none;border:0;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer}
   .cab button:hover,.cab button:focus-visible{background:rgba(255,255,255,.15);outline:2px solid #fff;outline-offset:-4px}
-  /* zona de mensajes */
   .chat{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:12px 8% 12px;display:flex;flex-direction:column;gap:3px;
     background-color:var(--fondo);
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='%23c9c1b5' stroke-width='1.2' opacity='.55'><circle cx='20' cy='20' r='6'/><path d='M60 12l4 8 8 2-6 6 1 8-7-4-7 4 1-8-6-6 8-2z'/><rect x='90' y='16' width='14' height='14' rx='3'/><path d='M14 70c8-10 20-10 28 0'/><circle cx='70' cy='72' r='9'/><path d='M96 62v20M86 72h20'/><path d='M22 104h20M32 94v20'/><circle cx='66' cy='104' r='5'/><path d='M92 98l12 12M104 98l-12 12'/></g></svg>");}
@@ -60,7 +58,6 @@
   .msg.otro + .msg.otro::before,.msg.mio + .msg.mio::before{display:none}
   .msg.otro + .msg.otro{border-top-left-radius:8px}
   .msg.mio + .msg.mio{border-top-right-radius:8px}
-  /* ficha */
   .ficha{align-self:stretch;margin:10px 0 6px;background:var(--nota);border:1px solid var(--nota-b);border-radius:10px;padding:10px 12px 12px;box-shadow:var(--sombra);animation:pop .2s ease-out}
   .ficha h2{margin:0 0 2px;font-size:14.5px;display:flex;align-items:center;gap:6px}
   .ficha .sub{font-size:12px;color:#6b6340;margin:0 0 8px}
@@ -68,13 +65,11 @@
   .ficha dt{color:#6b6340;font-weight:600}
   .ficha dd{margin:0;overflow-wrap:anywhere}
   .ficha .alta{color:#b42318;font-weight:600}
-  /* escribiendo */
   .typing{display:inline-flex;gap:4px;padding:6px 2px 2px}
   .typing i{width:7px;height:7px;border-radius:50%;background:#8696a0;animation:t 1.3s infinite}
   .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
   @keyframes t{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
   @keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
-  /* barra de escritura */
   .barra{flex:0 0 auto;display:flex;align-items:flex-end;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:#f0f2f5}
   .barra button{border:0;background:none;width:42px;height:42px;border-radius:50%;font-size:22px;color:#54656f;cursor:pointer;flex:0 0 auto;display:grid;place-items:center}
   .barra button:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
@@ -83,8 +78,6 @@
   .barra textarea{flex:1;min-width:0;resize:none;border:0;border-radius:20px;padding:10px 14px;font:inherit;font-size:15px;line-height:1.3;max-height:110px;background:#fff;color:var(--tinta)}
   .barra textarea:focus{outline:2px solid var(--verde);outline-offset:-2px}
   .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .pie{position:relative;z-index:1;text-align:center;font-size:12px;color:#3b4a54;padding:10px 12px 0;max-width:440px;margin:0 auto}
-  @media (max-width:699px){.pie{display:none}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -137,6 +130,7 @@
     if (!on && t) { t.remove(); estado.textContent = "en línea"; }
   }
   function pintarFicha(ficha) {
+    const previa = chat.querySelector(".ficha"); if (previa) previa.remove(); // si Isa recibe una ficha actualizada, sustituye a la anterior
     const f = document.createElement("article"); f.className = "ficha";
     f.innerHTML = '<h2>📋 Resumen que recibiría Isa</h2><p class="sub">En la versión real le llega a Isa por WhatsApp o correo. La clienta no lo ve.</p>';
     const dl = document.createElement("dl");
@@ -151,81 +145,168 @@
   }
   const espera = ms => new Promise(r => setTimeout(r, ms));
 
-  // ---------- respaldo local si el servidor no responde ----------
+  // ---------- respaldo local si el servidor no responde: sabe saludar, contestar dudas y recoger el caso ----------
+  const KB = {
+    precio: "El precio depende de cada caso (zona, sesiones, técnica) y te lo da Isa en la valoración, que es gratuita y puede ser online o presencial.",
+    sesiones: "Normalmente son dos sesiones separadas entre 4 y 8 semanas: en la segunda Isa ajusta el color y corrige lo que haga falta. Sobre tejido cicatricial también suelen ser dos.",
+    dura: "El tatuaje paramédico es permanente. La micropigmentación dura entre 1 y 3 años en cejas y labios y de 3 a 5 en ojos; la piel es un organismo vivo y con el tiempo se puede repasar.",
+    horario: "Isa atiende los lunes, martes, jueves y viernes de 9:30 a 20:00 y los miércoles de 9:30 a 16:00, siempre con cita previa.",
+    donde: "Isa trabaja en Barcelona, en el Local 3 de Sant Gervasi (Plaça Sant Joaquim 3), y dos días al mes en Madrid, en Espacio Lazo. Siempre con cita previa.",
+    valoracion: "La valoración es gratuita y puedes hacerla online por videollamada o presencial. Si ya llevas una micropigmentación anterior, Isa prefiere verla en persona.",
+    embarazo: "Durante el embarazo y los primeros meses de lactancia no se hacen tratamientos. Cuando pase ese tiempo, Isa te valora encantada.",
+    cuidados: "Los primeros días se limpia y se hidrata la zona tres veces al día (Bepanthol o aceite de coco) y se evitan sol, sauna, piscina y maquillaje. Isa te da el protocolo completo por escrito.",
+    antes: "Antes de la sesión: sin bótox ni ácido hialurónico las tres semanas previas, sin aspirina ni anticoagulantes cinco días antes, sin alcohol doce horas antes y sin exfoliaciones esa semana.",
+    radioterapia: "El momento adecuado después de la cirugía o de la radioterapia lo decide Isa en la valoración, viendo cómo está la piel. Por eso pide fotos y los tiempos de cada cosa.",
+    quien: "Isa es licenciada en Bellas Artes, con maestría en tatuaje y micropigmentación y formación específica en reconstrucción areolar y pezón 3D. Tiene 55 reseñas de cinco estrellas en Google.",
+    seguro: "Trabaja con equipos certificados y pigmentos de grado médico o estético avalados por la normativa europea, con protocolos de higiene estrictos.",
+    diabetes: "Con diabetes, hipertensión, problemas cardíacos o de coagulación Isa lo valora con especial atención y puede pedirte un informe médico.",
+    duele: { areola: "En la zona de la areola suele molestar poco, porque tras la cirugía la sensibilidad es menor. Isa te lo explica en la valoración.", cicatriz: "Molesta más que duele; la piel de una cicatriz suele tener menos sensibilidad.", facial: "Depende de la zona: en cejas casi nada (queda un enrojecimiento que se va en unas tres horas), en ojos molesta algo más y los labios son la zona más sensible, con inflamación que baja en dos o tres días.", capilar: "Molesta más que duele, y los primeros días pica un poco; no hay que rascarse.", eliminar: "Es molesto pero rápido; con el método Rejuvi, sin láser, la sensación es parecida a la de un tatuaje.", otro: "Molesta más que duele; depende de la zona, y la mayoría de clientas lo llevan bien." },
+  };
+  const FAQ = [
+    ["precio", /precio|cuesta|cu[aá]nto vale|tarifa|coste|€|euros/],
+    ["duele", /duele|dolor|doloroso|molest/],
+    ["sesiones", /sesi[oó]n|cu[aá]ntas veces|una sola vez/],
+    ["dura", /cu[aá]nto (me )?dura|duraci[oó]n|permanente|para siempre|se va con el tiempo|se borra/],
+    ["horario", /horario|a qu[eé] hora|cu[aá]ndo atiend|abr[ií]s|abre/],
+    ["donde", /d[oó]nde|donde est|direcci[oó]n|ubicad|sant gervasi|c[oó]mo llego/],
+    ["embarazo", /embaraz|lactancia|dando el pecho/],
+    ["radioterapia", /(cu[aá]nto|cuando|cu[aá]ndo).*(radioterapia|quimio|operaci[oó]n|cirug[ií]a)|esperar.*(radio|cirug)/],
+    ["cuidados", /cuidado|despu[eé]s del tratamiento|postratamiento|cicatriza|puedo tomar el sol|piscina/],
+    ["antes", /antes de la sesi[oó]n|preparar|puedo tomar|bótox|botox|hialur/],
+    ["valoracion", /valoraci[oó]n|gratis|gratuita|videollamada/],
+    ["quien", /qui[eé]n es isa|quien es|formaci[oó]n|titulaci[oó]n|experiencia|est[aá]s titulad/],
+    ["seguro", /seguro|pigmento|higiene|riesgo|infecci[oó]n|alergia/],
+    ["diabetes", /diabet|hipertens|coagul|anticoag|sintrom|coraz[oó]n|cardi/],
+  ];
+  const esPregunta = t => /\?|^(cu[aá]n|qu[eé]|d[oó]nde|c[oó]mo|puedo|se puede|es |hay |tengo que|me puedo)/i.test(t.trim());
   const guionLocal = {
     arrancar() {
       const u = historial.slice(2).filter(m => m.role === "user").map(m => m.content); // sin el "Hola" de arranque
       const todo = u.join(" \n ");
-      const d = { motivo: u[0] || "", detalles: "", foto: /\[La clienta ha enviado una foto/.test(todo), nombre: "", ciudad: (todo.match(/barcelona|madrid/i) || [""])[0], val: "", dispo: "" };
+      const primera = u.find(t => !this.esSaludo(t) && !FAQ.some(([, re]) => re.test(t.toLowerCase()) && esPregunta(t)) && !t.includes(FOTO)) || "";
+      const d = { motivo: primera, detalles: "", foto: /\[La clienta ha enviado una foto/.test(todo), nombre: "", ciudad: "", val: "", dispo: "", pendiente: null, cerrado: false, fotoPedida: false };
       d.previa = /microblading|micropigmentaci[oó]n\s+(anterior|previa|antigua|hace)|me\s+hice\s+(las\s+cejas|los\s+labios|el\s+eyeliner)/i.test(todo);
+      const c = todo.match(/barcelona|madrid/i); if (c) d.ciudad = /madrid/i.test(c[0]) ? "Madrid" : "Barcelona";
       if (/online|videollamada|en l[ií]nea/i.test(todo)) d.val = "online"; else if (/presencial|en persona/i.test(todo)) d.val = "presencial";
       if (d.previa) d.val = "presencial";
       const disp = todo.match(/\b(ma[ñn]anas?|tardes?|lunes|martes|mi[eé]rcoles|jueves|viernes|cualquier d[ií]a|entre semana)\b[^.\n]*/i); if (disp) d.dispo = disp[0];
-      if (u.length > 1) d.detalles = u.slice(1, 3).join(". ");
-      d.pendiente = null; d.ciudad = d.ciudad ? (/madrid/i.test(d.ciudad) ? "Madrid" : "Barcelona") : "";
+      const i = u.indexOf(primera); if (i >= 0 && u.length > i + 1) d.detalles = u.slice(i + 1, i + 3).filter(t => !t.includes(FOTO)).join(". ");
       guion = d;
     },
+    esSaludo: t => /^(hola|holi|buenas|buenos d[ií]as|buenas tardes|buenas noches|hey|ey|qu[eé] tal|que tal|hello|hi)[\s!.,]*$/i.test(t.trim()),
+    esGracias: t => /^(gracias|muchas gracias|vale,? gracias|ok,? gracias|perfecto|genial|estupendo|ok|vale|de acuerdo)[\s!.,]*$/i.test(t.trim()),
     tipo(m) {
-      m = m.toLowerCase();
+      m = (m || "").toLowerCase();
       if (/areola|pez[oó]n|mastectom|mama|pecho|oncol|c[aá]ncer/.test(m)) return "areola";
       if (/cicatriz|estr[ií]a|mancha|ces[aá]rea|quemadura|ombligo/.test(m)) return "cicatriz";
-      if (/ceja|labio|ojo|eyeliner|peca|microblading/.test(m)) return "facial";
-      if (/capilar|alopecia|pelo|cabello|cuero cabelludo/.test(m)) return "capilar";
-      if (/elimina|borrar|quitar|l[aá]ser/.test(m)) return "eliminar";
+      if (/ceja|labio|ojo|eyeliner|peca|microblading|micropigmentaci/.test(m)) return "facial";
+      if (/capilar|alopecia|pelo|cabello|cuero cabelludo|calv/.test(m)) return "capilar";
+      if (/elimina|borrar|quitar|l[aá]ser|arrepent/.test(m)) return "eliminar";
       return "otro";
     },
-    preguntaDetalle() {
-      switch (this.tipo(guion.motivo)) {
-        case "areola": return "Gracias por contármelo. ¿Cuánto tiempo hace de la cirugía o de la reconstrucción, y hubo radioterapia?";
-        case "cicatriz": return "Entiendo. ¿Cuánto tiempo tiene y está completamente cerrada, sin inflamación?";
-        case "facial": return "Perfecto. ¿Llevas alguna micropigmentación anterior en esa zona o sería la primera vez?";
-        case "capilar": return "Entiendo. ¿Es por alopecia o por una cicatriz, y en qué zona?";
-        case "eliminar": return "De acuerdo. ¿Qué te gustaría eliminar y cuánto tiempo hace que se hizo?";
-        default: return "Entiendo. ¿En qué zona es y qué te gustaría mejorar?";
-      }
+    contexto(t) {
+      return {
+        areola: ["Gracias por contármelo, y siento el proceso que has pasado. Isa hace justo eso: reconstruye la areola y el pezón con efecto 3D, jugando con luces y sombras, y sobre tejido cicatricial suelen ser dos sesiones.", "Para que pueda valorarlo: ¿cuánto tiempo hace de la cirugía o de la reconstrucción, y hubo radioterapia?"],
+        cicatriz: ["Entiendo. El camuflaje se hace con una prueba de color para dar con tu tono de piel y normalmente dos sesiones; Isa necesita que la cicatriz esté cerrada y tenga al menos un año.", "¿Cuánto tiempo tiene la tuya y dónde está?"],
+        facial: ["Perfecto. Isa trabaja cejas, ojos, labios y pecas con técnicas muy naturales, en dos sesiones separadas unas semanas para ajustar el color.", "¿Llevas alguna micropigmentación anterior en esa zona o sería la primera vez?"],
+        capilar: ["Entiendo. La tricopigmentación simula el pelo con pigmento en el cuero cabelludo; la primera sesión son unas dos horas y molesta más que duele.", "¿Es por alopecia o por una cicatriz, y en qué zona?"],
+        eliminar: ["De acuerdo. Isa elimina tatuajes y micropigmentaciones con láser o con el método Rejuvi, sin láser, que es el que prefiere.", "¿Qué te gustaría eliminar y cuánto tiempo hace que se hizo?"],
+        otro: ["Cuéntame un poco más para orientarte bien.", "¿En qué zona es y qué te gustaría mejorar?"],
+      }[t];
+    },
+    pregunta(paso, soloPregunta) {
+      const g = guion;
+      const c = this.contexto(this.tipo(g.motivo));
+      return {
+        motivo: "¿Qué te gustaría consultar con Isa?",
+        detalles: soloPregunta ? c[1] : c[0] + " " + c[1],
+        foto: "¿Podrías enviarme una o dos fotos de la zona con luz natural y sin filtros? Las verá solo Isa.",
+        nombre: "¿Cuál es tu nombre y apellido?",
+        ciudad: "¿Prefieres que Isa te atienda en Barcelona (Local 3, Sant Gervasi) o en Madrid (Espacio Lazo, dos días al mes)?",
+        val: g.previa ? "Como llevas una micropigmentación anterior, Isa te valorará en persona. ¿Te viene bien una valoración presencial?" : "¿Prefieres una valoración online por videollamada o presencial?",
+        dispo: "¿Qué te viene mejor, mañanas o tardes, y qué días de la semana?",
+      }[paso];
     },
     siguiente() {
       const g = guion;
-      if (!g.motivo) return ["motivo", "¿Me cuentas brevemente el motivo de tu consulta?"];
-      if (!g.detalles) return ["detalles", this.preguntaDetalle()];
-      if (!g.foto && !g.fotoPedida) return ["foto", "¿Podrías enviarme una o dos fotos de la zona con luz natural y sin filtros? Las verá solo Isa."];
-      if (!g.nombre) return ["nombre", "¿Cuál es tu nombre y apellido?"];
-      if (!g.ciudad) return ["ciudad", "¿Prefieres que Isa te atienda en Barcelona (Local 3, Sant Gervasi) o en Madrid (Espacio Lazo, dos días al mes)?"];
-      if (!g.val) return ["val", "¿Prefieres una valoración online por videollamada o presencial?"];
-      if (!g.dispo) return ["dispo", "¿Qué te viene mejor, mañanas o tardes, y qué días de la semana?"];
-      return ["cierre", null];
+      if (!g.motivo) return "motivo";
+      if (!g.detalles) return "detalles";
+      if (!g.foto && !g.fotoPedida) return "foto";
+      if (!g.nombre) return "nombre";
+      if (!g.ciudad) return "ciudad";
+      if (!g.val) return "val";
+      if (!g.dispo) return "dispo";
+      return "cierre";
+    },
+    faq(t) {
+      const low = t.toLowerCase();
+      for (const [k, re] of FAQ) if (re.test(low) && (k === "precio" || esPregunta(t))) {
+        if (k === "duele") return KB.duele[this.tipo(guion.motivo || t)] || KB.duele.otro;
+        return KB[k];
+      }
+      return null;
     },
     responder(entrada) {
-      const g = guion, p = g.pendiente;
-      const esFoto = entrada.includes(FOTO);
-      if (esFoto) { g.foto = true; if (p === "foto") g.pendiente = null; }
-      else if (p === "motivo") g.motivo = entrada;
-      else if (p === "detalles") { g.detalles = entrada; if (/anterior|previa|hace \d|microblading|ya llevo|me hice/i.test(entrada)) { g.previa = true; g.val = "presencial"; } }
-      else if (p === "foto") { g.fotoPedida = true; if (/^(vale|ok|s[ií]|ahora|luego|despu[eé]s|no)/i.test(entrada)) {} else g.detalles += ". " + entrada; }
-      else if (p === "nombre") g.nombre = entrada.replace(/^(soy|me llamo)\s+/i, "");
-      else if (p === "ciudad") g.ciudad = /madrid/i.test(entrada) ? "Madrid" : "Barcelona";
-      else if (p === "val") g.val = /online|video|l[ií]nea/i.test(entrada) ? "online" : "presencial";
-      else if (p === "dispo") g.dispo = entrada;
-      else if (!g.motivo) g.motivo = entrada;
-      if (esFoto && p && p !== "foto") return { texto: "Gracias por la foto, Isa la verá personalmente. " + this.siguiente()[1].replace(/^Gracias\.\s*/, "") , ficha: null, mantener: true };
-      const [paso, preg] = this.siguiente();
+      const g = guion, p = g.pendiente, t = entrada.trim();
+      const esFoto = t.includes(FOTO);
+      let pre = "";
+      if (esFoto) {
+        g.foto = true; pre = "Gracias por la foto, Isa la verá personalmente. ";
+        if (p === "foto") g.pendiente = null;
+        else if (p) return { texto: pre + this.pregunta(p, true), ficha: null }; // sigue pendiente lo que se preguntó
+      }
+      else if (this.esSaludo(t)) {
+        const q = p ? this.pregunta(p, true) : (g.cerrado ? "" : this.pregunta("motivo"));
+        return { texto: (g.motivo ? "¡Hola de nuevo! " : "¡Hola! Encantado de atenderte. ") + q, ficha: null };
+      }
+      else if (this.esGracias(t)) {
+        if (g.cerrado) return { texto: "Gracias a ti. Isa te contestará en cuanto revise tu caso, en su horario de atención.", ficha: null };
+        return { texto: "De nada. " + this.pregunta(p || "motivo", true), ficha: null };
+      }
+      else {
+        const f = this.faq(t);
+        if (f) {
+          // Si además cuenta su caso ("me operaron… ¿duele?"), lo recogemos como motivo y seguimos el recorrido.
+          if (!g.motivo && this.tipo(t) !== "otro") { g.motivo = t.replace(/\s*¿[^?]*\?\s*/g, " ").replace(/[\s,;:]+$/, "").trim() || t; g.pendiente = "detalles"; return { texto: f + " " + this.pregunta("detalles", true), ficha: null }; }
+          const q = p ? this.pregunta(p, true) : (g.cerrado ? "" : (g.motivo ? this.pregunta(this.siguiente()) : "Si me cuentas qué te gustaría consultar, lo preparo para Isa."));
+          return { texto: f + (q ? " " + q : ""), ficha: null };
+        }
+        if (p === "motivo" || (!g.motivo && !p)) g.motivo = t;
+        else if (p === "detalles") { g.detalles = t; if (/anterior|previa|hace \d|microblading|ya llevo|me hice|s[ií],? llevo/i.test(t)) { g.previa = true; g.val = "presencial"; } }
+        else if (p === "foto") { g.fotoPedida = true; if (!/^(vale|ok|s[ií]|ahora|luego|despu[eé]s|no|claro|te la (mando|env[ií]o))/i.test(t)) g.detalles += ". " + t; }
+        else if (p === "nombre") g.nombre = t.replace(/^(soy|me llamo)\s+/i, "").replace(/[.!]+$/, "");
+        else if (p === "ciudad") g.ciudad = /madrid/i.test(t) ? "Madrid" : "Barcelona";
+        else if (p === "val") g.val = /online|video|l[ií]nea/i.test(t) ? "online" : "presencial";
+        else if (p === "dispo") g.dispo = t;
+        else if (g.cerrado) { g.detalles += ". " + t; return { texto: "Anotado, se lo paso a Isa junto con el resto. Ella te contestará personalmente en su horario.", ficha: null }; }
+        // datos sueltos en la misma frase
+        if (!g.ciudad && /barcelona|madrid/i.test(t)) g.ciudad = /madrid/i.test(t) ? "Madrid" : "Barcelona";
+        if (!g.val && /online|videollamada/i.test(t)) g.val = "online"; else if (!g.val && /presencial|en persona/i.test(t)) g.val = "presencial";
+        if (!g.dispo && /\b(ma[ñn]anas?|tardes?|lunes|martes|mi[eé]rcoles|jueves|viernes)\b/i.test(t) && p !== "detalles") g.dispo = t.match(/\b(ma[ñn]anas?|tardes?|lunes|martes|mi[eé]rcoles|jueves|viernes)\b[^.\n]*/i)[0];
+        if (g.previa) g.val = "presencial";
+      }
+      const paso = this.siguiente();
       if (paso === "cierre") {
-        g.pendiente = null;
-        const t = this.tipo(g.motivo);
-        const ficha = ["Nombre: " + g.nombre, "Motivo: " + g.motivo, "Detalles: " + (g.detalles || "sin dato"), "Fotos: " + (g.foto ? "sí" : "no"), "Ciudad: " + g.ciudad, "Valoración: " + g.val + (g.previa ? " (lleva micropigmentación anterior)" : ""), "Disponibilidad: " + g.dispo, "Idioma: castellano", "Prioridad: " + (t === "areola" ? "alta" : "normal")].join("\n");
-        return { texto: `Perfecto, ${g.nombre.split(" ")[0]}. Isa revisará tu caso y te contestará personalmente en su horario (lunes, martes, jueves y viernes de 9:30 a 20:00; miércoles de 9:30 a 16:00). Gracias por confiar en el trabajo de Isa.`, ficha };
+        g.pendiente = null; g.cerrado = true;
+        const tp = this.tipo(g.motivo);
+        const ficha = ["Nombre: " + g.nombre, "Motivo: " + g.motivo, "Detalles: " + (g.detalles || "sin dato"), "Fotos: " + (g.foto ? "sí" : "no"), "Ciudad: " + g.ciudad, "Valoración: " + g.val + (g.previa ? " (lleva micropigmentación anterior)" : ""), "Disponibilidad: " + g.dispo, "Idioma: castellano", "Prioridad: " + (tp === "areola" ? "alta" : "normal")].join("\n");
+        const nombre = g.nombre.split(" ")[0];
+        return { texto: `${pre}Perfecto, ${nombre}, ya tengo todo lo que Isa necesita. Revisará tu caso y te contestará personalmente en su horario (lunes, martes, jueves y viernes de 9:30 a 20:00; miércoles de 9:30 a 16:00). Gracias por confiar en el trabajo de Isa.`, ficha };
       }
       g.pendiente = paso;
-      let pre = "";
-      if (esFoto) pre = "Gracias por la foto, Isa la verá personalmente. ";
-      else if (p === "nombre" && g.nombre) pre = `Encantado, ${g.nombre.split(" ")[0]}. `;
-      else if (p === "val" && g.previa) pre = "Como llevas una micropigmentación anterior, Isa te valorará en persona. ";
-      else if (p === "detalles") pre = "Gracias, lo anoto para Isa. ";
-      return { texto: pre + preg, ficha: null };
+      if (!pre) {
+        if (p === "nombre" && g.nombre) pre = `Encantado, ${g.nombre.split(" ")[0]}. `;
+        else if (p === "detalles") pre = "Gracias, lo anoto para Isa. ";
+        else if (p === "ciudad") pre = g.ciudad === "Madrid" ? "Perfecto, en Madrid Isa atiende dos días al mes en Espacio Lazo; las fechas te las confirma ella. " : "Perfecto, en Barcelona Isa atiende en el Local 3 de Sant Gervasi. ";
+        else if (p === "val") pre = g.val === "online" ? "Muy bien, la valoración online se hace por videollamada. " : "Muy bien. ";
+      }
+      return { texto: pre + this.pregunta(paso), ficha: null };
     },
   };
 
+  const FORZAR_LOCAL = new URLSearchParams(location.search).has("local"); // ?local=1 → pruebas del guion sin servidor
   async function pedirRespuesta() {
+    if (FORZAR_LOCAL && !guion) guionLocal.arrancar();
     if (guion) return guionLocal.responder(historial[historial.length - 1].content);
     try {
       const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 25000);

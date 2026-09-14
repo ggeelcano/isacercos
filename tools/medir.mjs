@@ -53,11 +53,13 @@ for (const w of [320, 360, 390, 430, 768, 1280]) {
   const h = w < 700 ? 780 : 900;
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: w < 700 ? 2 : 1, mobile: w < 700 });
   cdp.errores.length = 0;
-  await cdp.send("Page.navigate", { url: `http://127.0.0.1:${PORT}/` }); await sleep(1500);
+  const local = w === 320; // a 320 se prueba el guion local (?local=1); a 390 y 1280 la IA real
+  await cdp.send("Page.navigate", { url: `http://127.0.0.1:${PORT}/${local ? "?local=1" : ""}` }); await sleep(1500);
   const a = await ev(cdp, SONDA);
   let b = null;
   if (w === 320 || w === 390 || w === 1280) {
-    await escribir(cdp, "Hola, me operaron de cáncer de mama y me gustaría hacerme la areola");
+    await escribir(cdp, "hola");
+    await escribir(cdp, "me operaron de cáncer de mama y me gustaría hacerme la areola, ¿duele?");
     await escribir(cdp, "La mastectomía fue hace un año y terminé la radioterapia en marzo. Solo el pecho izquierdo");
     // foto adjunta real por CDP
     const doc = await cdp.send("DOM.getDocument", { depth: 1 });
@@ -70,16 +72,16 @@ for (const w of [320, 360, 390, 430, 768, 1280]) {
     await escribir(cdp, "Por las tardes, martes o jueves");
     await sleep(1200);
     b = await ev(cdp, SONDA);
-    b.textos = await ev(cdp, "[...document.querySelectorAll('.msg.otro')].map(m=>m.textContent.replace(/\\d\\d:\\d\\d$/,'').trim().slice(0,90))");
+    b.textos = await ev(cdp, "[...document.querySelectorAll('.msg.otro')].map(m=>m.textContent.replace(/\\d\\d:\\d\\d$/,'').trim().slice(0,160))");
     b.ficha = await ev(cdp, "(document.querySelector('.ficha dl')||{}).textContent||''");
   }
   await foto(cdp, w);
   const ok = a.sw <= a.cw && a.bodySw <= a.cw && !a.fuera.length && (!b || (b.sw <= b.cw && !b.fuera.length && b.fichas === 1 && b.chatSw <= b.chatCw)) && !cdp.errores.length && a.avatarOk;
   if (!ok) fallos++;
-  console.log(`${String(w).padStart(4)} ${ok ? "OK " : "MAL"} cw=${a.cw} sw=${a.sw} fuera=${a.fuera.length} avatar=${a.avatarOk}${b ? ` | tras conversación: sw=${b.sw} chatSw=${b.chatSw}/${b.chatCw} msgs=${b.msgs} fichas=${b.fichas} fuera=${b.fuera.length}` : ""} errores=${cdp.errores.length}`);
+  console.log(`${String(w).padStart(4)} ${ok ? "OK " : "MAL"} cw=${a.cw} sw=${a.sw} fuera=${a.fuera.length} avatar=${a.avatarOk}${b ? ` | tras conversación${local ? " (guion local)" : " (IA)"}: sw=${b.sw} chatSw=${b.chatSw}/${b.chatCw} msgs=${b.msgs} fichas=${b.fichas} fuera=${b.fuera.length}` : ""} errores=${cdp.errores.length}`);
   if (a.fuera.length || (b && b.fuera.length)) console.log("   fuera:", (a.fuera.length ? a.fuera : b.fuera).slice(0, 5));
   if (cdp.errores.length) console.log("   errores:", cdp.errores.slice(0, 3));
-  if (b && w === 390) { console.log("   bot dijo:"); b.textos.forEach(t => console.log("     ·", t)); console.log("   ficha:", b.ficha.slice(0, 300)); }
+  if (b && (w === 390 || w === 320)) { console.log("   bot dijo:"); b.textos.forEach(t => console.log("     ·", t)); console.log("   ficha:", b.ficha.slice(0, 300)); }
 }
 // imagen OG
 await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1200, height: 630, deviceScaleFactor: 1, mobile: false });
